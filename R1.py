@@ -281,17 +281,17 @@ def factorList(left):
    
 def factor():
    if token.kind == UNSIGNED:
+      advance()
       return enter("@" + token.image, token.image, True)
       ##outfile.write('          pwc  ' + token.image + '\n')
-      advance()
    elif token.kind == PLUS:
+      advance()
       return enter("@" + token.image, token.image, True)
-      advance()
       ##outfile.write('          pwc  ' + token.image + '\n')
-      consume(UNSIGNED)
+      ##consume(UNSIGNED)
    elif token.kind == MINUS:
-      return enter("@_" + token.image, "-" + token.image, True)
       advance()
+      return enter("@_" + token.image, "-" + token.image, True)
       ##outfile.write('          pwc  ' + '-' + token.image + '\n')
       consume(UNSIGNED)
    elif token.kind == ID:
@@ -299,7 +299,6 @@ def factor():
       return enter(token.image, "0", True)
       ##enter(token.image)
       ##outfile.write('          p    ' + token.image + '\n')
-      
    elif token.kind == LEFTPAREN:
       advance()
       index = expr()
