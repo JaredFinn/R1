@@ -22,6 +22,7 @@ symbol = []        # list of variable names
 dwValue = []
 needsdw = []
 tempIndex = 0
+left = 0
 
 # constants
 EOF           = 0      # end of file
@@ -86,6 +87,7 @@ def main():
       # parse and and generate assembly language
       outfile.write(
          ';------------------------------------------- Assembler code\n')
+      outfile.write("     !register")
       parser()
  
    # on an error, display an error message
@@ -281,24 +283,22 @@ def factorList(left):
    
 def factor():
    if token.kind == UNSIGNED:
+      index = enter("@" + token.image, token.image, True)
       advance()
-      return enter("@" + token.image, token.image, True)
-      ##outfile.write('          pwc  ' + token.image + '\n')
+      return index
    elif token.kind == PLUS:
+      index = enter("@" + token.image, token.image, True)
       advance()
-      return enter("@" + token.image, token.image, True)
-      ##outfile.write('          pwc  ' + token.image + '\n')
-      ##consume(UNSIGNED)
-   elif token.kind == MINUS:
-      advance()
-      return enter("@_" + token.image, "-" + token.image, True)
-      ##outfile.write('          pwc  ' + '-' + token.image + '\n')
       consume(UNSIGNED)
-   elif token.kind == ID:
+      return index
+   elif token.kind == MINUS:
+      index = enter("@_" + token.image, "-" + token.image, True)
       advance()
-      return enter(token.image, "0", True)
-      ##enter(token.image)
-      ##outfile.write('          p    ' + token.image + '\n')
+      consume(UNSIGNED)
+      return index
+   elif token.kind == ID:
+      index = enter(token.image, "0", True)
+      return index
    elif token.kind == LEFTPAREN:
       advance()
       index = expr()
@@ -311,16 +311,16 @@ def factor():
 # code generator functions #
 ############################
 def add(left, right):
-    outfile.write('          ld ' + left)
-    outfile.write('          add ' + right)
+    outfile.write('          ld ' + str(left) + "\n")
+    outfile.write('          add ' + str(right) + "\n")
     temp = getTemp()
-    outfile.write('          st ' + temp)
+    outfile.write('          st ' + str(temp) + "\n")
     return temp
 
 def getTemp():
     global tempIndex
     tempIndex += 1
-    temp = "@t" + tempIndex 
+    temp = "@t" + str(tempIndex) 
     return enter(temp, "0", True)
 
 def assign(left, expValue):
@@ -338,7 +338,7 @@ def endCode():
    outfile.write('          halt\n')
 
    for i in symbol:
-       if(needsdw[i]):
+       if(needsdw[symbol.index(i)]):
             outfile.write(('%-10s:' % i) + 'dw ' + dwValue[i] +'\n')
 
 ####################
