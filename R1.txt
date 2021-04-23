@@ -1,4 +1,28 @@
-# S1.py compiler 
+e Version 1.8
+Log file S1.finn.log
+
+Your name:          Finn Jared H
+Machinecode file:   S1.e        
+Check file:         S1.chk
+Check data:         bafd 42 32 368 15bf
+
+=================== Fri Apr 23 13:34:19 2021 ==============r
+4107
+4107
+
+===========================================================r
+
+Report for:         Finn Jared H
+Program output:     correct
+Machine code size:  52     (10   OVER LIMIT ) <----- WARNING
+Machine inst count: 36     (4    OVER LIMIT ) <----- WARNING
+Execution time:     367    (1    under limit)
+
+================ r(16b8) terminated Fri Apr 23 13:34:19 2021
+
+###############################################################################
+
+# R1.py compiler 
 import sys, time 
 
 class Token:
@@ -77,7 +101,7 @@ def main():
 
    lines = source.splitlines()
 
-   outfile.write('; ' + time.strftime('%c') + '%34s' % 'YOUR NAME HERE\n')
+   outfile.write('; ' + time.strftime('%c') + '%34s' % 'Jared Finn\n')
    outfile.write('; ' + 'Compiler    = ' + sys.argv[0] + '\n')
    outfile.write('; ' + 'Input file  = ' + sys.argv[1] + '.s' + '\n')
    outfile.write('; ' + 'Output file = ' + sys.argv[1] + '.a' + '\n')
@@ -180,13 +204,13 @@ def getchar():
 # Symbol table     #
 ####################
 def enter(s, v, b):
-    if s in symbol:
-      return symbol.index(s)
-    
-    symbol.append(s)
-    dwValue.append(v)
-    needsdw.append(b)
-    return len(symbol)
+   if s not in symbol and b:
+      symbol.append(s)
+      dwValue.append(v)
+      needsdw.append(b)
+      return s
+   else:
+      return s
 
 ####################
 # parser functions #
@@ -232,7 +256,7 @@ def statement():
       printlnStatement()
 
 def assignmentStatement():
-    enter(token.image, "0", True)                       
+    left = enter(token.image, "0", True)                       
     advance()
     consume(ASSIGN)
     expValue = expr()
@@ -287,17 +311,18 @@ def factor():
       advance()
       return index
    elif token.kind == PLUS:
-      index = enter("@" + token.image, token.image, True)
       advance()
+      index = enter("@" + token.image, token.image, True)
       consume(UNSIGNED)
       return index
    elif token.kind == MINUS:
-      index = enter("@_" + token.image, "-" + token.image, True)
       advance()
+      index = enter("@_" + token.image, "-" + token.image, True)
       consume(UNSIGNED)
       return index
    elif token.kind == ID:
       index = enter(token.image, "0", True)
+      advance()
       return index
    elif token.kind == LEFTPAREN:
       advance()
@@ -317,21 +342,33 @@ def add(left, right):
     outfile.write('          st ' + str(temp) + "\n")
     return temp
 
+def mult(left, right):
+    outfile.write('          ld ' + str(left) + "\n")
+    outfile.write('          mult ' + str(right) + "\n")
+    temp = getTemp()
+    outfile.write('          st ' + str(temp) + "\n")
+    return temp
+
 def getTemp():
     global tempIndex
     tempIndex += 1
-    temp = "@t" + str(tempIndex) 
-    return enter(temp, "0", True)
+    temp = "@t" + str(tempIndex)
+    enter(temp, "0", True) 
+    return temp
 
 def assign(left, expValue):
     outfile.write('          ld   ' + str(expValue) + '\n')
     outfile.write('          st   ' + str(left) + '\n')
 
 def println(expVal):
-    outfile.write('          ld   ' + str(expVal) + '\n')
-    outfile.write('          dout\n')
-    outfile.write("          pc   '\\n'" + '\n')
-    outfile.write('          aout\n')
+   if type(expVal) != int:
+      outfile.write('          ld ' + str(expVal) + '\n')
+      outfile.write('          dout\n')
+      outfile.write('          ldc "\\n"\n')
+      outfile.write('          aout\n')
+   else:
+      outfile.write('          ldc ' + str(expVal) + '\n')
+      outfile.write('          aout\n')
 
 def endCode():
    outfile.write('\n')
@@ -339,9 +376,11 @@ def endCode():
 
    for i in symbol:
        if(needsdw[symbol.index(i)]):
-            outfile.write(('%-10s:' % i) + 'dw ' + dwValue[i] +'\n')
+            outfile.write(('%-10s:' % i) + 'dw ' + dwValue[symbol.index(i)] + '\n')
 
 ####################
 # start of program #
 ####################
 main()
+
+
